@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -12,9 +14,11 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Data
 @Builder
+@RedisHash("user")
 public class User implements Serializable {
 
     @NotNull
+    @Id
     private String name;
 
     private int age;

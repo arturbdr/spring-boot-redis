@@ -1,0 +1,7 @@
+spring:
+  redis.host: localhost
+  redis.port: 6379
+  cache.type: redis
+  cache.redis.time-to-live: 15000
+  main:
+    banner-mode: "off"
