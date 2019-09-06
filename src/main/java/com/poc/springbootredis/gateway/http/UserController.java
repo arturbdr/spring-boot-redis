@@ -12,14 +12,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {
 
-
+    private static final String RECEIVED_FROM_POST_DATA = "Received from POST data {}";
     private final UserLogin userLogin;
     private final UserToUserWrapper userToUserWrapper;
 
@@ -32,20 +30,20 @@ public class UserController {
 
     @PostMapping("flavour2")
     public ResponseEntity<User> getFromSpringRepositoryInterfaces(@RequestBody final User user) {
-        log.info("Received from POST data {}", user);
+        log.info(RECEIVED_FROM_POST_DATA, user);
         return ResponseEntity.ok(userLogin.getUserUsingSpringRepositoryInterface(user));
     }
 
     @PostMapping("flavour3")
     public ResponseEntity<User> getFromCustomRedisTemplate(@RequestBody final User user) {
-        log.info("Received from POST data {}", user);
+        log.info(RECEIVED_FROM_POST_DATA, user);
 
         return ResponseEntity.ok(userLogin.getUserUsingRedisTemplate(user));
     }
 
     @PostMapping("flavour4")
     public ResponseEntity<User> getFromUserWrapper(@RequestBody final User user) {
-        log.info("Received from POST data {}", user);
+        log.info(RECEIVED_FROM_POST_DATA, user);
         final UserWrapper convert = userToUserWrapper.convert(user);
 
         return ResponseEntity.ok(userLogin.getUseWithinUserWrapper(convert));
