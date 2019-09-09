@@ -3,7 +3,6 @@ package com.poc.springbootredis.usecase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.poc.springbootredis.domain.User;
-import com.poc.springbootredis.domain.UserWrapper;
 import com.poc.springbootredis.gateway.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +13,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -26,14 +26,14 @@ public class UserLogin {
 
     // First Flavour - Spring magic annotation
     @Cacheable(value = "users", key = "#user.hashCode()")
-    public User getUser(User user) {
+    public User flavour1(User user) {
         log.info("Inside the usecase with the following user {}", user);
 
         return user;
     }
 
     // Partial Control with Spring Spring Repository interface
-    public User getUserUsingSpringRepositoryInterface(final User user) {
+    public User flavour2(final User user) {
         final Optional<User> optionalUser = userRepository
                 .findById(user.getName())
                 .or(() -> {
@@ -46,7 +46,7 @@ public class UserLogin {
 
 
     // Third flavor (full verbose but full control)
-    public User getUserUsingRedisTemplate(final User user) {
+    public User flavour3(final User user) {
         final String userCached = redisTemplate.opsForValue().get(user.getName());
 
         if (userCached != null) {
@@ -68,26 +68,19 @@ public class UserLogin {
         return user;
     }
 
-    public User getUseWithinUserWrapper(final UserWrapper userWrapper) {
+    public User ttl1(final User user) throws IOException {
 
-        final String userCached = redisTemplate.opsForValue().get(userWrapper.getCacheKey());
+        final String userCached = redisTemplate.opsForValue().get(user.getName());
 
         if (userCached != null) {
-            log.info("Returning from CACHE {}", userWrapper.getCacheKey());
-            try {
-                return objectMapper.readValue(userCached, User.class);
-            } catch (IOException e) {
-                ReflectionUtils.rethrowRuntimeException(e);
-            }
+            log.info("Returning from CACHE {}", user);
+            return objectMapper.readValue(userCached, User.class);
         } else {
-            log.info("Storing on CACHE {}", userWrapper.getCacheKey());
-            try {
-                // LOGIC - DONT FORGET TO PUT THE EXPIRATION OF THE KEY
-                redisTemplate.opsForValue().set(userWrapper.getCacheKey(), objectMapper.writeValueAsString(userWrapper.getUser()));
-            } catch (JsonProcessingException e) {
-                ReflectionUtils.rethrowRuntimeException(e);
-            }
+            log.info("Storing on CACHE {} with key {}", user, user.getName());
+
+            // Insert with TTL
+            redisTemplate.opsForValue().set(user.getName(), objectMapper.writeValueAsString(user), 10, TimeUnit.SECONDS);
         }
-        return userWrapper.getUser();
+        return objectMapper.readValue(redisTemplate.opsForValue().get(user.getName()), User.class);
     }
 }
