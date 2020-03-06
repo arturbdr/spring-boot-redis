@@ -2,7 +2,5 @@ spring:
   redis:
     host: localhost
     port: 6379
-    ssl: true
-    password: dqwd
   main:
     banner-mode: "off"
